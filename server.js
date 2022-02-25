@@ -52,8 +52,6 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname,"build")))
 
-const DB_URL = "mongodb+srv://arshad:arshad@cluster0.yysn1.mongodb.net/notes?retryWrites=true&w=majority"
-
 mongoose.connect(process.env.DB_URL,{
 
      useNewUrlParser: true, useUnifiedTopology: true 
