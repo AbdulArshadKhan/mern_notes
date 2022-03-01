@@ -402,22 +402,23 @@ app.get("/get_parent", async (req, res) => {
   if (user) {
     const query = user.notes.id(parent);
 
-    // if (query.parent_id.valueOf() === decoded.id.valueOf()) {
-    //   const answer = {
-    //     text: "It is user Id",
-    //     _id: decoded.id,
-    //     parent_id: "There is no parent",
-    //   };
-    //   res.json({ answer });
-    // } else   // This check should be done at the client side website needs to be changed
-    
+    if(query)
     {
       const answer = user.notes.id(query.parent_id);
-      // console.log("The value of answer is ",answer)
-      res.json({
-        answer
-      });
+        // console.log("The value of answer is ",answer)
+        res.json({
+          answer
+        });
+    }    
+    else
+    {
+      const answer = user.notes.id(decoded.id);
+        res.json({
+          answer
+        });
     }
+    
+
   } 
   else 
   {
