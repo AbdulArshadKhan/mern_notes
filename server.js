@@ -52,7 +52,7 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname,"build")))
 
-mongoose.connect(process.env.DB_URL,{
+mongoose.connect("mongodb+srv://arshad:arshad@cluster0.yysn1.mongodb.net/notes?retryWrites=true&w=majority",{
 
      useNewUrlParser: true, useUnifiedTopology: true 
 
