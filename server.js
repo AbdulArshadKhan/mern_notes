@@ -127,14 +127,15 @@ app.get("/data", async (req, res) => {
 
 //SignUp Part ✅
 app.post("/register", async (req, res) => {
-  const { Username, Email, Password, ConfirmPassword } = req.body;
+  const { Username, Email, Password } = req.body;
 
   const user = await User.findOne({ Email }).exec();
+  
 
   if (user) {
     res.status(500);
     res.json({
-      message: "User Already Exists",
+      message: "User Already Exists with the given email, try signing up with another email",
     });
 
     console.log("User Already Exists");
@@ -143,9 +144,7 @@ app.post("/register", async (req, res) => {
   } 
   else 
   {
-    if (ConfirmPassword === Password) 
-    {
-      await User.create({ Username, Email, Password }, async function (err) {
+    await User.create({ Username, Email, Password }, async function (err) {
         if (err) return console.log(err);
         else {
           const user1 = await User.findOne({ Email }).exec();
@@ -153,6 +152,7 @@ app.post("/register", async (req, res) => {
           const token = jwt.sign(
             {
               id: user1._id,
+              Username: user1.Username
             },
             "secret"
           );
@@ -173,26 +173,24 @@ app.post("/register", async (req, res) => {
 
           res.json({
             message: "User Created Successfully",
+            Username: user1.Username,
+      						id: user1._id,
             token,
           });
         }
       });
-    } 
-    
-    else {
-      res.json({
-        message: "Incorrect Password",
-      });
-    }
   }
 });
 
 
 //LogIn Part ✅
 app.post("/login", async (req, res) => {
+
   const { Email, Password } = req.body;
 
   const user = await User.findOne({ Email }).exec();
+  
+  console.log("The value of user is ",user)
 
   if (user) {
     if (Password !== user.Password) {
@@ -203,6 +201,7 @@ app.post("/login", async (req, res) => {
       const token = jwt.sign(
         {
           id: user._id,
+          Username:user.Username
         },
         "secret"
         );
@@ -210,6 +209,7 @@ app.post("/login", async (req, res) => {
         res.json({
           message: "Login Successfull",
           token,
+          Username: user.Username,
           id:user._id
         });
       }
@@ -224,6 +224,8 @@ app.post("/login", async (req, res) => {
 // Add a note to notes ( Changes Done ) ✅
 app.post("/add", async (req, res) => {
   const { addNote, token, parent } = req.body;
+  
+  
   
   let decoded = jwt.verify(token, "secret");
   
@@ -780,3 +782,48 @@ app.post("/change_order",async (req,res)=>{
   })
 
 })
+
+app.get("/delete_all_notes", async (req, res) => {
+
+  const token = req.headers["x-access-token"];
+
+  const delete_note_id = req.headers["x-notes-id"];
+
+  const decoded = jwt.verify(token, "secret");
+
+  const user = await User.findById(decoded.id).exec();
+
+  let deleteArray = [];
+
+  const reference_to_deleted_note = user.notes.id(delete_note_id)
+
+  for (let i = 0; i < reference_to_deleted_note.children.length; i++) {
+    deleteArray.push(reference_to_deleted_note.children[i])
+  }
+
+  reference_to_deleted_note.children.splice(0,reference_to_deleted_note.children.length)
+
+  while(deleteArray.length>0)
+  {
+    const child_to_delete = deleteArray.shift()     // Only getting _id and text from delete array 
+
+    const note_to_delete = user.notes.id(child_to_delete._id)
+
+    for (let i = 0; i < note_to_delete.children.length; i++) {
+      deleteArray.push(note_to_delete.children[i])
+    }
+
+    user.notes.id(note_to_delete).remove()
+  }
+
+  user.save();
+
+  res.json({ message: `All Children of ${reference_to_deleted_note.text} Removed Successfully`,"notes":user.notes.id(delete_note_id).children });
+  
+
+});
+
+
+
+
+
